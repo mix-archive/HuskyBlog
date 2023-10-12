@@ -1,0 +1,46 @@
+version: "3"
+
+services:
+  bot:
+    build:
+      context: ./bot
+    environment:
+      - TITLE=Admin Bot for 1linenginx
+      - PORT=80
+      - URL_CHECK_REGEX=^https?://.{1,256}$$
+      - TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
+      - DOMAIN=${DOMAIN}
+      - FLAG=${FLAG}
+    init: true
+    security_opt:
+      - seccomp=chrome.json
+    ports:
+      - "80:80"
+    restart: on-failure
+
+  blog:
+    # docker run --name typecho-server -e TYPECHO_SITE_URL=https://your-domain.com -d joyqi/typecho:nightly-php7.4-apache
+    image: joyqi/typecho:nightly-php7.4-apache
+    restart: on-failure
+    environment:
+      - TYPECHO_SITE_URL=https://simpleblog.ctf.buptmerak.cn
+      - TYPECHO_DB_ADAPTER=Pdo_Pgsql
+      - TYPECHO_DB_HOST=database
+      - TYPECHO_DB_PORT=5432
+      - TYPECHO_DB_DATABASE=typecho
+      - TYPECHO_DB_USER=typecho
+      - TYPECHO_DB_PASSWORD=TyP3ch0_8L0g
+      - TYPECHO_INSTALL=1
+    ports:
+      - "127.0.0.1:18080:80"
+    depends_on:
+      - database
+
+  database:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=typecho
+      - POSTGRES_USER=typecho
+      - POSTGRES_PASSWORD=TyP3ch0_8L0g

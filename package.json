@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "workspaces": [
+    "api",
+    "site"
+  ],
+  "scripts": {
+    "serve":"yarn workspace site hexo server"
+  }
+}
