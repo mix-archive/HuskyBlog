@@ -10,15 +10,15 @@ app.use(express.urlencoded({ extended: false }));
 
 app.post("/submit", turnstile, async (req, res) => {
   const memoryId = crypto.randomUUID(),
-    { content, draft } = req.body;
+    { content, name, draft } = req.body;
 
-  if (typeof content !== "string" || typeof draft !== "boolean") {
+  if (typeof content !== "string" || typeof name !== 'string') {
     return res.status(400).send("Invalid content");
   }
   const url = new URL("/my-messages", req.body.url);
   url.searchParams.set("id", memoryId);
 
-  memories.set(memoryId, content);
+  memories.set(memoryId, { content, name });
 
   if (!draft) {
     try {
