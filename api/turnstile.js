@@ -20,6 +20,8 @@ module.exports = async (req, res, next) => {
       },
     })
     .json();
+  
+  console.log(`[+] Received captcha response: `, resp);
   if (resp.success) {
     return next();
   } else {

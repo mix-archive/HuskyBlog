@@ -19,6 +19,7 @@ const visit = async (url) => {
       browser = await puppeteer.launch({
         headless: "new",
         args,
+        ignoreHTTPSErrors: true,
       });
     }
 

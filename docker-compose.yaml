@@ -1,28 +1,30 @@
 version: "3"
 
+volumes:
+  database:
+
 services:
-  bot:
-    build:
-      context: ./bot
+  database:
+    image: postgres:16-alpine
+    restart: always
+    volumes:
+      - database:/var/lib/postgresql/data
     environment:
-      - TITLE=Admin Bot for 1linenginx
-      - PORT=80
-      - URL_CHECK_REGEX=^https?://.{1,256}$$
-      - TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY}
-      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
-      - DOMAIN=${DOMAIN}
-      - FLAG=${FLAG}
-    init: true
-    security_opt:
-      - seccomp=chrome.json
-    ports:
-      - "80:80"
-    restart: on-failure
+      - POSTGRES_DB=typecho
+      - POSTGRES_USER=typecho
+      - POSTGRES_PASSWORD=TyP3ch0_8L0g
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   blog:
     # docker run --name typecho-server -e TYPECHO_SITE_URL=https://your-domain.com -d joyqi/typecho:nightly-php7.4-apache
-    image: joyqi/typecho:nightly-php7.4-apache
+    image: joyqi/typecho:nightly-php7.4-fpm
     restart: on-failure
+    volumes:
+      - ./blog/usr/themes:/app/usr/themes:ro
     environment:
       - TYPECHO_SITE_URL=https://simpleblog.ctf.buptmerak.cn
       - TYPECHO_DB_ADAPTER=Pdo_Pgsql
@@ -32,15 +34,32 @@ services:
       - TYPECHO_DB_USER=typecho
       - TYPECHO_DB_PASSWORD=TyP3ch0_8L0g
       - TYPECHO_INSTALL=1
-    ports:
-      - "127.0.0.1:18080:80"
     depends_on:
-      - database
+      database:
+        condition: service_healthy
 
-  database:
-    image: postgres:16-alpine
-    restart: always
+  server:
+    image: caddy:latest
+    
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./blog:/app:ro
+    ports:
+      - "127.0.0.1:80:80"
+    depends_on: [blog]
+  
+  bot:
+    build:
+      context: ./api
     environment:
-      - POSTGRES_DB=typecho
-      - POSTGRES_USER=typecho
-      - POSTGRES_PASSWORD=TyP3ch0_8L0g
+      - PORT=4000
+      - DOMAIN=simpleblog.ctf.buptmerak.cn
+      - TURNSTILE_SITE_KEY=0x4AAAAAAALibk91MmiZbrXh
+      - TURNSTILE_SECRET_KEY=0x4AAAAAAALiboEqKDBYPJc-saHCrYeLk50
+      - FLAG=RealButterCookiesFromHusky
+    init: true
+    security_opt:
+      - seccomp=chrome.json
+    restart: on-failure
+    depends_on:
+      - server

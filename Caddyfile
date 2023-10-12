@@ -1,0 +1,9 @@
+simpleblog.ctf.buptmerak.cn {
+    tls internal
+    php_fastcgi blog:9000
+    root * /app
+    file_server
+    handle_path /memory/* {
+	    reverse_proxy bot:4000
+    }
+}
